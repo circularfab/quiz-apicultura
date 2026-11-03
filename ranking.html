@@ -21,13 +21,14 @@
   td:last-child{border-radius:0 1.2vh 1.2vh 0;text-align:right;font-weight:800;color:var(--miel)}
   td.nombre{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
   td.det{font-size:2.3vh;color:var(--gris);text-align:right;white-space:nowrap}
-  tr.p1 td{background:linear-gradient(90deg,#5a4510,#3a2c0c)}
+  tr.p1 td{background:#4a3a0e}
   tr.nuevo td{animation:brillo 2.5s ease-out}
   @keyframes brillo{0%{background:#8a6a10}100%{}}
   .vacio{font-size:3vh;color:var(--gris);margin-top:6vh}
   .lado{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
   .qr{background:#fff;padding:1.6vh;border-radius:2vh;width:26vw;max-width:46vh}
-  .qr img{width:100%;display:block}
+  .qr img,.qr canvas{width:100%!important;height:auto!important;display:block}
+  .aviso{font-size:1.8vh;color:#ff8a7a;margin-top:1vh;min-height:1em}
   .cta{font-size:3.6vh;font-weight:800;margin:2.5vh 0 1vh;color:var(--miel)}
   .stats{font-size:2.6vh;color:var(--gris);margin-top:2vh}
   .stats b{color:var(--texto);font-size:4vh;display:block}
@@ -59,13 +60,15 @@
     <div class="vacio oculto" id="vacio">Aún no hay puntuaciones. ¡Sé el primero! 🐝</div>
   </main>
   <aside class="lado">
-    <div class="qr"><img id="qr" alt="Código QR para jugar"></div>
+    <div class="qr" id="qr"></div>
+    <div class="aviso" id="avisoQR"></div>
     <div class="cta">📱 ¡Escanea y juega!</div>
     <div class="stats"><b id="jugadores">0</b>personas han jugado</div>
     <div class="pie">Actualizado <span id="hora">—</span></div>
   </aside>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="config.js"></script>
 <script>
 const medallas = ['🥇','🥈','🥉'];
@@ -91,16 +94,31 @@ function pintarCabecera(){
   $('subtitulo').textContent = CFG.subtitulo + ' · Top ' + CFG.top;
 }
 
+// Dibuja el QR del juego. Se genera en el propio navegador (librería qrcodejs);
+// si la librería no carga, usa un servicio externo como reserva.
 function ponerQR(codigo){
-  if (!codigo || codigo === codigoQR) return;
+  codigo = codigo || '';
+  if (codigoQR !== null && codigo === codigoQR) return;
   codigoQR = codigo;
   const url = new URL('./', location.href);
-  url.searchParams.set('c', codigo);
-  $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=' + encodeURIComponent(url.href);
+  if (codigo) url.searchParams.set('c', codigo);
+  $('avisoQR').textContent = codigo ? '' : '⚠ Sin código del stand: el juego lo pedirá a mano';
+  const caja = $('qr');
+  caja.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(caja, { text: url.href, width: 600, height: 600, correctLevel: QRCode.CorrectLevel.M });
+  } else {
+    const img = document.createElement('img');
+    img.alt = 'Código QR para jugar';
+    img.onerror = () => { $('avisoQR').textContent = '⚠ No se pudo generar el QR (¿sin internet?)'; };
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=' + encodeURIComponent(url.href);
+    caja.appendChild(img);
+  }
 }
 
 function pintar(d){
   ponerQR(d.codigoEvento);
+  if (!('codigoEvento' in d)) $('avisoQR').textContent = '⚠ El servidor no envía el código: ¿publicaste la nueva versión de Code.gs?';
   const tb = $('filas');
   tb.innerHTML = '';
   $('vacio').classList.toggle('oculto', d.top.length > 0);
