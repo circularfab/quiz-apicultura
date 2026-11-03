@@ -8,8 +8,10 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyktCDi8OBoOJjdV4V_A0u4
 // ─── No hace falta tocar nada de aquí para abajo ───
 
 /** Llamada GET (configuración y ranking) */
-async function apiGet(accion) {
-  const r = await fetch(API_URL + '?accion=' + encodeURIComponent(accion) + '&t=' + Date.now());
+async function apiGet(accion, extra) {
+  let url = API_URL + '?accion=' + encodeURIComponent(accion) + '&t=' + Date.now();
+  for (const k in (extra || {})) url += '&' + k + '=' + encodeURIComponent(extra[k]);
+  const r = await fetch(url);
   return procesar(r);
 }
 

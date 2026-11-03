@@ -77,6 +77,10 @@
     <p class="sub" id="subtitulo"></p>
     <label for="nombre">Tu nombre</label>
     <input id="nombre" maxlength="20" autocomplete="off" placeholder="Ej.: Lucía G.">
+    <div id="cajaCodigo" class="oculto" style="margin-top:14px">
+      <label for="codigo">Código del stand</label>
+      <input id="codigo" maxlength="10" autocomplete="off" autocapitalize="characters" placeholder="Lo encontrarás en el stand">
+    </div>
     <button class="btn" id="bJugar">¡Jugar!</button>
     <div class="error" id="errInicio"></div>
     <p class="reglas" id="reglas"></p>
@@ -113,6 +117,10 @@ let CFG = null;
 let partida = null, actual = 0, total = 0, inicioPregunta = 0, temporizador = null, bloqueado = false;
 
 const $ = id => document.getElementById(id);
+
+// Código del stand: viene en el QR (…/?c=XXXXXX). Si no viene, se pide a mano.
+const CODIGO_URL = new URLSearchParams(location.search).get('c') || '';
+if (!CODIGO_URL) $('cajaCodigo').classList.remove('oculto');
 function ver(id){ ['vInicio','vPregunta','vFinal','vCargando'].forEach(v => $(v).classList.toggle('oculto', v !== id)); }
 function clave(){ return 'quizFeria_' + CFG.titulo; }
 function guardarLocal(v){ try{ localStorage.setItem(clave(), JSON.stringify(v)); }catch(e){} }
@@ -143,7 +151,8 @@ async function empezar(){
   $('bJugar').disabled = true;
   ver('vCargando'); $('vCargando').textContent = 'Preparando preguntas…';
   try {
-    partida = await apiPost({ accion: 'empezar', nombre: nombre });
+    const codigo = CODIGO_URL || $('codigo').value.trim();
+    partida = await apiPost({ accion: 'empezar', nombre: nombre, codigo: codigo });
     total = partida.preguntas.length; actual = 0;
     $('marcador').textContent = '0 pts';
     mostrarPregunta();
@@ -189,8 +198,9 @@ async function elegir(i){
   $('feedback').textContent = i === -1 ? '⏰ ¡Tiempo!' : 'Comprobando…';
   try {
     const r = await apiPost({ accion: 'responder', id: partida.id, indice: actual, eleccion: i, ms: ms });
-    botones[r.correcta].classList.add('correcta');
+    if (r.correcta !== null && botones[r.correcta]) botones[r.correcta].classList.add('correcta');
     if (i >= 0 && !r.acierto) botones[i].classList.add('mal');
+    if (i >= 0 && r.acierto) botones[i].classList.add('correcta');
     $('feedback').textContent = r.acierto ? '✅ ¡Correcto! +' + r.puntos : (i === -1 ? '⏰ Se acabó el tiempo' : '❌ ¡Casi!');
     $('feedback').className = 'feedback ' + (r.acierto ? 'ok' : 'ko');
     $('marcador').textContent = r.total + ' pts';

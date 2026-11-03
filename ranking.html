@@ -32,10 +32,26 @@
   .stats{font-size:2.6vh;color:var(--gris);margin-top:2vh}
   .stats b{color:var(--texto);font-size:4vh;display:block}
   .pie{font-size:1.7vh;color:#7d6c4b;margin-top:2vh}
+  .login{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px}
+  .login form{max-width:420px;width:100%}
+  .login input{width:100%;font-size:20px;padding:12px;border-radius:10px;border:2px solid var(--miel);background:#fff;color:#2b2112;margin-top:8px}
+  .login button{width:100%;margin-top:12px;font-size:20px;font-weight:800;padding:12px;border:0;border-radius:10px;background:var(--miel);color:#2b2112;cursor:pointer}
+  .errLogin{color:#ff8a7a;margin-top:10px;min-height:1.2em}
+  .login h1{font-size:28px} .login .sub{font-size:16px}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div id="login" class="login oculto">
+  <form id="fLogin">
+    <div style="font-size:5vh">🔒</div>
+    <h1>Ranking privado</h1>
+    <p class="sub">Introduce la clave de administrador</p>
+    <input id="clave" type="password" autocomplete="current-password">
+    <button type="submit">Entrar</button>
+    <div id="errLogin" class="errLogin"></div>
+  </form>
+</div>
+<div class="wrap oculto" id="panel">
   <main>
     <h1 id="titulo"></h1>
     <div class="sub" id="subtitulo"></div>
@@ -53,59 +69,108 @@
 <script src="config.js"></script>
 <script>
 const medallas = ['🥇','🥈','🥉'];
+const CLAVE_LS = 'quizFeria_claveAdmin';
 let anteriores = new Set();
 let CFG = { titulo: 'Ranking', subtitulo: '', top: 10, refresco: 10 };
+let clave = '', codigoQR = null, intervalo = null;
+const $ = id => document.getElementById(id);
 
-// La URL del juego es esta misma carpeta (index.html)
-const urlJuego = new URL('./', location.href).href;
-document.getElementById('qr').src =
-  'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=' + encodeURIComponent(urlJuego);
+// La clave puede venir en la URL como …/ranking.html#clave=XXXX
+// (lo que va detrás de # no se envía a GitHub ni queda en sus registros)
+const hash = new URLSearchParams(location.hash.slice(1));
+if (hash.get('clave')) {
+  clave = hash.get('clave');
+  history.replaceState(null, '', location.pathname); // la quitamos de la barra de direcciones
+} else {
+  try { clave = localStorage.getItem(CLAVE_LS) || ''; } catch (e) {}
+}
 
 function pintarCabecera(){
   document.title = 'Ranking · ' + CFG.titulo;
-  document.getElementById('titulo').textContent = '🏆 ' + CFG.titulo;
-  document.getElementById('subtitulo').textContent = CFG.subtitulo + ' · Top ' + CFG.top;
+  $('titulo').textContent = '🏆 ' + CFG.titulo;
+  $('subtitulo').textContent = CFG.subtitulo + ' · Top ' + CFG.top;
+}
+
+function ponerQR(codigo){
+  if (!codigo || codigo === codigoQR) return;
+  codigoQR = codigo;
+  const url = new URL('./', location.href);
+  url.searchParams.set('c', codigo);
+  $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=' + encodeURIComponent(url.href);
 }
 
 function pintar(d){
-  const tb = document.getElementById('filas');
+  ponerQR(d.codigoEvento);
+  const tb = $('filas');
   tb.innerHTML = '';
-  document.getElementById('vacio').classList.toggle('oculto', d.top.length > 0);
+  $('vacio').classList.toggle('oculto', d.top.length > 0);
   const actuales = new Set();
   d.top.forEach((r, i) => {
-    const clave = r.nombre + '|' + r.puntos + '|' + r.segundos;
-    actuales.add(clave);
+    const k = r.nombre + '|' + r.puntos + '|' + r.segundos;
+    actuales.add(k);
     const tr = document.createElement('tr');
     if (i === 0) tr.className = 'p1';
-    if (anteriores.size && !anteriores.has(clave)) tr.classList.add('nuevo');
+    if (anteriores.size && !anteriores.has(k)) tr.classList.add('nuevo');
     [i < 3 ? medallas[i] : (i + 1), r.nombre, r.aciertos + ' ✓ · ' + r.segundos + ' s', r.puntos + ' pts']
-      .forEach((c, k) => {
+      .forEach((c, n) => {
         const td = document.createElement('td');
-        if (k === 1) td.className = 'nombre';
-        if (k === 2) td.className = 'det';
+        if (n === 1) td.className = 'nombre';
+        if (n === 2) td.className = 'det';
         td.textContent = c;
         tr.appendChild(td);
       });
     tb.appendChild(tr);
   });
   anteriores = actuales;
-  document.getElementById('jugadores').textContent = d.jugadores;
-  document.getElementById('hora').textContent = d.actualizado;
+  $('jugadores').textContent = d.jugadores;
+  $('hora').textContent = d.actualizado;
+}
+
+function pedirClave(msg){
+  clearInterval(intervalo);
+  $('panel').classList.add('oculto');
+  $('login').classList.remove('oculto');
+  $('errLogin').textContent = msg || '';
+  $('clave').focus();
 }
 
 async function cargar(){
-  try { pintar(await apiGet('ranking')); }
-  catch (e) { document.getElementById('hora').textContent = 'sin conexión, reintentando…'; }
+  try {
+    pintar(await apiGet('ranking', { clave: clave }));
+    try { localStorage.setItem(CLAVE_LS, clave); } catch (_) {}
+    return true;
+  } catch (e) {
+    if (/clave/i.test(e.message)) {
+      try { localStorage.removeItem(CLAVE_LS); } catch (_) {}
+      pedirClave(e.message);
+    } else {
+      $('hora').textContent = 'sin conexión, reintentando…';
+    }
+    return false;
+  }
 }
+
+function entrar(){
+  if (!clave) { pedirClave(); return; }
+  // Mostramos el panel y reintentamos periódicamente aunque falle la red;
+  // si la clave es incorrecta, cargar() vuelve a la pantalla de clave.
+  $('login').classList.add('oculto');
+  $('panel').classList.remove('oculto');
+  clearInterval(intervalo);
+  intervalo = setInterval(cargar, CFG.refresco * 1000);
+  cargar();
+}
+
+$('fLogin').addEventListener('submit', ev => {
+  ev.preventDefault();
+  clave = $('clave').value.trim();
+  entrar();
+});
 
 apiGet('config')
   .then(c => { CFG = c; })
   .catch(() => {})
-  .finally(() => {
-    pintarCabecera();
-    cargar();
-    setInterval(cargar, CFG.refresco * 1000);
-  });
+  .finally(() => { pintarCabecera(); entrar(); });
 </script>
 <style>.oculto{display:none}</style>
 </body>
