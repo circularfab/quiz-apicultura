@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Juego de preguntas</title>
+<style>
+  :root{
+    --miel:#f6b81a; --miel-osc:#c98a00; --cera:#fff8e6; --tinta:#2b2112;
+    --ok:#2e9e4f; --ko:#d64545; --gris:#7a6a50;
+    --a:#e8553d; --b:#2f7fd8; --c:#e0a800; --d:#3aa35b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    color:var(--tinta); background:var(--cera);
+    background-image:radial-gradient(circle at 10% 0%,#ffe9a8 0,transparent 45%),
+                     radial-gradient(circle at 100% 100%,#ffe0a0 0,transparent 40%);
+  }
+  .app{max-width:520px;margin:0 auto;min-height:100%;padding:20px 16px 32px;display:flex;flex-direction:column}
+  .oculto{display:none!important}
+  h1{font-size:1.7rem;margin:.2em 0 .1em;text-align:center}
+  .sub{text-align:center;color:var(--gris);margin:0 0 24px}
+  .abeja{font-size:3.2rem;text-align:center;margin-top:12px}
+  label{font-weight:600;display:block;margin-bottom:6px}
+  input{
+    width:100%;font-size:1.2rem;padding:14px;border:2px solid var(--miel);
+    border-radius:12px;background:#fff;outline:none
+  }
+  input:focus{border-color:var(--miel-osc)}
+  .btn{
+    width:100%;border:0;border-radius:14px;padding:16px;font-size:1.15rem;font-weight:700;
+    background:var(--miel);color:var(--tinta);margin-top:16px;cursor:pointer;
+    box-shadow:0 4px 0 var(--miel-osc)
+  }
+  .btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--miel-osc)}
+  .btn:disabled{opacity:.6}
+  .error{color:var(--ko);font-weight:600;margin-top:10px;min-height:1.2em}
+  .reglas{font-size:.95rem;color:var(--gris);margin-top:20px;line-height:1.45}
+
+  .cabecera{display:flex;justify-content:space-between;font-weight:700;margin-bottom:8px}
+  .barra{height:10px;background:#f0e2bd;border-radius:6px;overflow:hidden;margin-bottom:18px}
+  .barra>div{height:100%;background:var(--miel);width:100%}
+  .pregunta{
+    background:#fff;border-radius:16px;padding:20px;font-size:1.3rem;font-weight:700;
+    line-height:1.3;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:16px;text-align:center
+  }
+  .opciones{display:grid;gap:10px}
+  .op{
+    border:0;border-radius:14px;padding:16px 14px;font-size:1.1rem;font-weight:700;color:#fff;
+    text-align:left;cursor:pointer;display:flex;gap:10px;align-items:center;min-height:60px
+  }
+  .op .l{background:rgba(255,255,255,.25);border-radius:8px;padding:2px 9px}
+  .op:nth-child(1){background:var(--a)} .op:nth-child(2){background:var(--b)}
+  .op:nth-child(3){background:var(--c)} .op:nth-child(4){background:var(--d)}
+  .op.atenuada{opacity:.35}
+  .op.correcta{outline:5px solid var(--ok);opacity:1}
+  .op.mal{outline:5px solid var(--ko)}
+  .feedback{text-align:center;font-size:1.4rem;font-weight:800;margin-top:16px;min-height:2em}
+  .feedback.ok{color:var(--ok)} .feedback.ko{color:var(--ko)}
+
+  .final{text-align:center}
+  .grande{font-size:3.4rem;font-weight:900;color:var(--miel-osc);margin:8px 0}
+  .puesto{font-size:1.5rem;font-weight:800;margin:10px 0}
+  .tarjeta{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-top:12px}
+  .cargando{text-align:center;color:var(--gris);margin-top:40px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- INICIO -->
+  <section id="vInicio">
+    <div class="abeja">🐝</div>
+    <h1 id="titulo"></h1>
+    <p class="sub" id="subtitulo"></p>
+    <label for="nombre">Tu nombre</label>
+    <input id="nombre" maxlength="20" autocomplete="off" placeholder="Ej.: Lucía G.">
+    <button class="btn" id="bJugar">¡Jugar!</button>
+    <div class="error" id="errInicio"></div>
+    <p class="reglas" id="reglas"></p>
+  </section>
+
+  <!-- PREGUNTA -->
+  <section id="vPregunta" class="oculto">
+    <div class="cabecera"><span id="contador"></span><span id="marcador">0 pts</span></div>
+    <div class="barra"><div id="barra"></div></div>
+    <div class="pregunta" id="texto"></div>
+    <div class="opciones" id="opciones"></div>
+    <div class="feedback" id="feedback"></div>
+  </section>
+
+  <!-- FINAL -->
+  <section id="vFinal" class="oculto final">
+    <div class="abeja">🍯</div>
+    <h1>¡Enhorabuena, <span id="fNombre"></span>!</h1>
+    <div class="tarjeta">
+      <div>Tu puntuación</div>
+      <div class="grande" id="fPuntos"></div>
+      <div id="fAciertos"></div>
+      <div class="puesto" id="fPuesto"></div>
+    </div>
+    <p class="reglas">Busca tu nombre en la pantalla del stand 📺</p>
+  </section>
+
+  <div id="vCargando" class="cargando oculto">Cargando…</div>
+</div>
+
+<script src="config.js"></script>
+<script>
+let CFG = null;
+let partida = null, actual = 0, total = 0, inicioPregunta = 0, temporizador = null, bloqueado = false;
+
+const $ = id => document.getElementById(id);
+function ver(id){ ['vInicio','vPregunta','vFinal','vCargando'].forEach(v => $(v).classList.toggle('oculto', v !== id)); }
+function clave(){ return 'quizFeria_' + CFG.titulo; }
+function guardarLocal(v){ try{ localStorage.setItem(clave(), JSON.stringify(v)); }catch(e){} }
+function leerLocal(){ try{ return JSON.parse(localStorage.getItem(clave())); }catch(e){ return null; } }
+
+$('nombre').addEventListener('keydown', e => { if (e.key === 'Enter') empezar(); });
+$('bJugar').addEventListener('click', empezar);
+
+// Arranque: pedir configuración al servidor
+ver('vCargando');
+apiGet('config').then(c => {
+  CFG = c;
+  document.title = CFG.titulo;
+  $('titulo').textContent = CFG.titulo;
+  $('subtitulo').textContent = CFG.subtitulo;
+  $('reglas').textContent = 'Tienes ' + CFG.segundos + ' segundos por pregunta. Cuanto más rápido aciertes, más puntos sumas.';
+  const previo = leerLocal();
+  if (CFG.unIntento && previo && previo.resultado) mostrarFinal(previo.nombre, previo.resultado);
+  else ver('vInicio');
+}).catch(err => {
+  $('vCargando').textContent = 'No se pudo conectar con el juego: ' + err.message + '. Recarga la página.';
+});
+
+async function empezar(){
+  const nombre = $('nombre').value.trim();
+  $('errInicio').textContent = '';
+  if (nombre.length < 2){ $('errInicio').textContent = 'Escribe tu nombre (mínimo 2 letras).'; return; }
+  $('bJugar').disabled = true;
+  ver('vCargando'); $('vCargando').textContent = 'Preparando preguntas…';
+  try {
+    partida = await apiPost({ accion: 'empezar', nombre: nombre });
+    total = partida.preguntas.length; actual = 0;
+    $('marcador').textContent = '0 pts';
+    mostrarPregunta();
+  } catch (err) {
+    ver('vInicio'); $('bJugar').disabled = false;
+    $('errInicio').textContent = err.message;
+  }
+}
+
+function mostrarPregunta(){
+  const q = partida.preguntas[actual];
+  bloqueado = false;
+  $('contador').textContent = 'Pregunta ' + (actual + 1) + ' / ' + total;
+  $('texto').textContent = q.texto;
+  $('feedback').textContent = ''; $('feedback').className = 'feedback';
+  const cont = $('opciones'); cont.innerHTML = '';
+  q.opciones.forEach((txt, i) => {
+    const b = document.createElement('button');
+    b.className = 'op';
+    b.innerHTML = '<span class="l">' + 'ABCD'[i] + '</span><span></span>';
+    b.lastChild.textContent = txt;
+    b.onclick = () => elegir(i);
+    cont.appendChild(b);
+  });
+  ver('vPregunta');
+  inicioPregunta = Date.now();
+  const barra = $('barra');
+  clearInterval(temporizador);
+  temporizador = setInterval(() => {
+    const t = (Date.now() - inicioPregunta) / 1000;
+    barra.style.width = Math.max(0, 100 - t / CFG.segundos * 100) + '%';
+    if (t >= CFG.segundos) elegir(-1);
+  }, 100);
+}
+
+async function elegir(i){
+  if (bloqueado) return;
+  bloqueado = true;
+  clearInterval(temporizador);
+  const ms = Date.now() - inicioPregunta;
+  const botones = [...$('opciones').children];
+  botones.forEach((b, k) => { b.disabled = true; if (k !== i) b.classList.add('atenuada'); });
+  $('feedback').textContent = i === -1 ? '⏰ ¡Tiempo!' : 'Comprobando…';
+  try {
+    const r = await apiPost({ accion: 'responder', id: partida.id, indice: actual, eleccion: i, ms: ms });
+    botones[r.correcta].classList.add('correcta');
+    if (i >= 0 && !r.acierto) botones[i].classList.add('mal');
+    $('feedback').textContent = r.acierto ? '✅ ¡Correcto! +' + r.puntos : (i === -1 ? '⏰ Se acabó el tiempo' : '❌ ¡Casi!');
+    $('feedback').className = 'feedback ' + (r.acierto ? 'ok' : 'ko');
+    $('marcador').textContent = r.total + ' pts';
+    setTimeout(siguiente, 1600);
+  } catch (err) {
+    $('feedback').textContent = err.message;
+    $('feedback').className = 'feedback ko';
+    setTimeout(siguiente, 2000);
+  }
+}
+
+async function siguiente(){
+  actual++;
+  if (actual < total) { mostrarPregunta(); return; }
+  ver('vCargando');
+  $('vCargando').textContent = 'Guardando tu puntuación…';
+  try {
+    const r = await apiPost({ accion: 'terminar', id: partida.id });
+    guardarLocal({ nombre: partida.nombre, resultado: r });
+    mostrarFinal(partida.nombre, r);
+  } catch (err) {
+    $('vCargando').textContent = 'No se pudo guardar: ' + err.message + '. Avisa en el stand.';
+  }
+}
+
+function mostrarFinal(nombre, r){
+  $('fNombre').textContent = nombre;
+  $('fPuntos').textContent = r.puntos + ' pts';
+  $('fAciertos').textContent = r.aciertos + ' de ' + r.total + ' aciertos · ' + r.segundos + ' s';
+  $('fPuesto').textContent = r.puesto ? '🏆 Puesto ' + r.puesto + ' de ' + r.jugadores : '';
+  ver('vFinal');
+}
+</script>
+</body>
+</html>

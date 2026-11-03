@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranking</title>
+<style>
+  :root{ --miel:#f6b81a; --miel-osc:#c98a00; --fondo:#1d1608; --panel:#2b2110; --texto:#fff6dd; --gris:#c9b78f; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--fondo);color:var(--texto);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+  body{background-image:
+      radial-gradient(circle at 0% 0%,rgba(246,184,26,.18) 0,transparent 40%),
+      radial-gradient(circle at 100% 100%,rgba(246,184,26,.12) 0,transparent 40%)}
+  .wrap{display:grid;grid-template-columns:1fr 30vw;gap:3vw;height:100%;padding:3.5vh 3vw}
+  h1{font-size:4.4vh;margin:0;color:var(--miel)}
+  .sub{font-size:2.4vh;color:var(--gris);margin:.6vh 0 2.5vh}
+  table{width:100%;border-collapse:separate;border-spacing:0 1vh}
+  td{padding:1.4vh 1.6vw;font-size:3.3vh;background:var(--panel)}
+  td:first-child{border-radius:1.2vh 0 0 1.2vh;width:9vh;text-align:center;font-weight:900}
+  td:last-child{border-radius:0 1.2vh 1.2vh 0;text-align:right;font-weight:800;color:var(--miel)}
+  td.nombre{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
+  td.det{font-size:2.3vh;color:var(--gris);text-align:right;white-space:nowrap}
+  tr.p1 td{background:linear-gradient(90deg,#5a4510,#3a2c0c)}
+  tr.nuevo td{animation:brillo 2.5s ease-out}
+  @keyframes brillo{0%{background:#8a6a10}100%{}}
+  .vacio{font-size:3vh;color:var(--gris);margin-top:6vh}
+  .lado{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .qr{background:#fff;padding:1.6vh;border-radius:2vh;width:26vw;max-width:46vh}
+  .qr img{width:100%;display:block}
+  .cta{font-size:3.6vh;font-weight:800;margin:2.5vh 0 1vh;color:var(--miel)}
+  .stats{font-size:2.6vh;color:var(--gris);margin-top:2vh}
+  .stats b{color:var(--texto);font-size:4vh;display:block}
+  .pie{font-size:1.7vh;color:#7d6c4b;margin-top:2vh}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main>
+    <h1 id="titulo"></h1>
+    <div class="sub" id="subtitulo"></div>
+    <table><tbody id="filas"></tbody></table>
+    <div class="vacio oculto" id="vacio">Aún no hay puntuaciones. ¡Sé el primero! 🐝</div>
+  </main>
+  <aside class="lado">
+    <div class="qr"><img id="qr" alt="Código QR para jugar"></div>
+    <div class="cta">📱 ¡Escanea y juega!</div>
+    <div class="stats"><b id="jugadores">0</b>personas han jugado</div>
+    <div class="pie">Actualizado <span id="hora">—</span></div>
+  </aside>
+</div>
+
+<script src="config.js"></script>
+<script>
+const medallas = ['🥇','🥈','🥉'];
+let anteriores = new Set();
+let CFG = { titulo: 'Ranking', subtitulo: '', top: 10, refresco: 10 };
+
+// La URL del juego es esta misma carpeta (index.html)
+const urlJuego = new URL('./', location.href).href;
+document.getElementById('qr').src =
+  'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=' + encodeURIComponent(urlJuego);
+
+function pintarCabecera(){
+  document.title = 'Ranking · ' + CFG.titulo;
+  document.getElementById('titulo').textContent = '🏆 ' + CFG.titulo;
+  document.getElementById('subtitulo').textContent = CFG.subtitulo + ' · Top ' + CFG.top;
+}
+
+function pintar(d){
+  const tb = document.getElementById('filas');
+  tb.innerHTML = '';
+  document.getElementById('vacio').classList.toggle('oculto', d.top.length > 0);
+  const actuales = new Set();
+  d.top.forEach((r, i) => {
+    const clave = r.nombre + '|' + r.puntos + '|' + r.segundos;
+    actuales.add(clave);
+    const tr = document.createElement('tr');
+    if (i === 0) tr.className = 'p1';
+    if (anteriores.size && !anteriores.has(clave)) tr.classList.add('nuevo');
+    [i < 3 ? medallas[i] : (i + 1), r.nombre, r.aciertos + ' ✓ · ' + r.segundos + ' s', r.puntos + ' pts']
+      .forEach((c, k) => {
+        const td = document.createElement('td');
+        if (k === 1) td.className = 'nombre';
+        if (k === 2) td.className = 'det';
+        td.textContent = c;
+        tr.appendChild(td);
+      });
+    tb.appendChild(tr);
+  });
+  anteriores = actuales;
+  document.getElementById('jugadores').textContent = d.jugadores;
+  document.getElementById('hora').textContent = d.actualizado;
+}
+
+async function cargar(){
+  try { pintar(await apiGet('ranking')); }
+  catch (e) { document.getElementById('hora').textContent = 'sin conexión, reintentando…'; }
+}
+
+apiGet('config')
+  .then(c => { CFG = c; })
+  .catch(() => {})
+  .finally(() => {
+    pintarCabecera();
+    cargar();
+    setInterval(cargar, CFG.refresco * 1000);
+  });
+</script>
+<style>.oculto{display:none}</style>
+</body>
+</html>
