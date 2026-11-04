@@ -65,6 +65,49 @@
   .puesto{font-size:1.5rem;font-weight:800;margin:10px 0}
   .tarjeta{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-top:12px}
   .cargando{text-align:center;color:var(--gris);margin-top:40px}
+
+  /* ═════════ AJUSTE 1 · LETRA GRANDE (interruptor letraGrande) ═════════ */
+  body.letra-grande .cabecera{font-size:1.2rem}
+  body.letra-grande .pregunta{font-size:clamp(1.5rem,6.4vw,2rem);padding:24px 18px;line-height:1.25}
+  body.letra-grande .opciones{gap:12px}
+  body.letra-grande .op{font-size:clamp(1.25rem,5.3vw,1.5rem);min-height:74px;padding:18px 16px}
+  body.letra-grande .op .l{font-size:1.05rem;padding:3px 11px}
+  body.letra-grande .feedback{font-size:1.75rem}
+
+  /* ═════════ AJUSTE 2 · ÉNFASIS EN ACIERTOS Y FALLOS (interruptor enfasisRespuestas) ═════════ */
+  body.enfasis .op{transition:transform .2s,opacity .2s,filter .2s}
+  body.enfasis .op.atenuada{opacity:.22;filter:grayscale(.7)}
+  body.enfasis .op.correcta{outline:none;opacity:1;filter:none;transform:scale(1.04);
+    box-shadow:0 0 0 6px var(--ok),0 0 26px rgba(46,158,79,.65)}
+  body.enfasis .op.mal{outline:none;opacity:1;filter:none;
+    box-shadow:0 0 0 6px var(--ko),0 0 22px rgba(214,69,69,.6)}
+  body.enfasis .op.correcta::after,body.enfasis .op.mal::after{
+    margin-left:auto;font-size:1.7em;line-height:1;background:#fff;border-radius:50%;
+    width:1.35em;height:1.35em;display:flex;align-items:center;justify-content:center;flex:none}
+  body.enfasis .op.correcta::after{content:'✓';color:var(--ok)}
+  body.enfasis .op.mal::after{content:'✗';color:var(--ko)}
+  body.enfasis .feedback.ok,body.enfasis .feedback.ko{visibility:hidden} /* el sello lo sustituye */
+  /* Destello de pantalla + sello central */
+  .destello{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:5}
+  .destello.ok{background:radial-gradient(circle,rgba(46,158,79,.10) 30%,rgba(46,158,79,.55) 100%)}
+  .destello.ko{background:radial-gradient(circle,rgba(214,69,69,.10) 30%,rgba(214,69,69,.55) 100%)}
+  .destello.ver{animation:destello 1.5s ease-out forwards}
+  .sello{position:fixed;left:50%;top:24%;z-index:6;pointer-events:none;opacity:0;
+    transform:translate(-50%,-50%) scale(.6);text-align:center;color:#fff;font-weight:900;
+    padding:18px 28px;border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.25);white-space:nowrap}
+  .sello.ok{background:var(--ok)} .sello.ko{background:var(--ko)}
+  .sello .s1{font-size:2.2rem} .sello .s2{font-size:1.3rem;opacity:.95;margin-top:2px}
+  .sello.ver{animation:sello 1.5s ease-out forwards}
+  @keyframes destello{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
+  @keyframes sello{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}
+    15%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
+    25%{transform:translate(-50%,-50%) scale(1)}
+    85%{opacity:1}100%{opacity:.9;transform:translate(-50%,-50%) scale(1)}}
+  @media (prefers-reduced-motion: no-preference){
+    body.enfasis .op.mal{animation:sacudir .45s}
+    @keyframes sacudir{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}
+      40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+  }
 </style>
 </head>
 <body>
@@ -110,18 +153,53 @@
 
   <div id="vCargando" class="cargando oculto">Cargando…</div>
 </div>
+<div class="destello" id="destello"></div>
+<div class="sello" id="sello"><div class="s1"></div><div class="s2"></div></div>
 
 <script src="config.js"></script>
 <script>
+// ════════════════════════════════════════════════════════════
+//  APARIENCIA · true = activado · false = como estaba antes
+//  (para probar sin subir nada: añade &letra=0 o &enfasis=0 a la URL)
+// ════════════════════════════════════════════════════════════
+const APARIENCIA = {
+  letraGrande: true,         // Ajuste 1: letra más grande en preguntas y respuestas
+  enfasisRespuestas: true,   // Ajuste 2: destello, sello, ✓/✗, sacudida y vibración
+};
+
 let CFG = null;
 let partida = null, actual = 0, total = 0, inicioPregunta = 0, temporizador = null, bloqueado = false;
 
 const $ = id => document.getElementById(id);
 
+// Aplicar interruptores de apariencia (la URL manda sobre lo de arriba, solo para pruebas)
+(function(){
+  const q = new URLSearchParams(location.search);
+  const val = (param, def) => q.has(param) ? q.get(param) !== '0' : def;
+  document.body.classList.toggle('letra-grande', val('letra', APARIENCIA.letraGrande));
+  document.body.classList.toggle('enfasis', val('enfasis', APARIENCIA.enfasisRespuestas));
+})();
+
+// Efecto de acierto/fallo (solo con el ajuste 2 activo)
+function efecto(acierto, linea1, linea2){
+  if (!document.body.classList.contains('enfasis')) return;
+  const d = $('destello'), s = $('sello');
+  d.className = 'destello ' + (acierto ? 'ok' : 'ko');
+  s.className = 'sello ' + (acierto ? 'ok' : 'ko');
+  s.children[0].textContent = linea1;
+  s.children[1].textContent = linea2 || '';
+  void d.offsetWidth; // reinicia la animación
+  d.classList.add('ver'); s.classList.add('ver');
+  try { if (navigator.vibrate) navigator.vibrate(acierto ? 60 : [90, 60, 90]); } catch (e) {}
+}
+
 // Código del stand: viene en el QR (…/?c=XXXXXX). Si no viene, se pide a mano.
 const CODIGO_URL = new URLSearchParams(location.search).get('c') || '';
 if (!CODIGO_URL) $('cajaCodigo').classList.remove('oculto');
-function ver(id){ ['vInicio','vPregunta','vFinal','vCargando'].forEach(v => $(v).classList.toggle('oculto', v !== id)); }
+function ver(id){
+  ['vInicio','vPregunta','vFinal','vCargando'].forEach(v => $(v).classList.toggle('oculto', v !== id));
+  $('destello').className = 'destello'; $('sello').className = 'sello'; // limpia efectos al cambiar de pantalla
+}
 function clave(){ return 'quizFeria_' + CFG.titulo; }
 function guardarLocal(v){ try{ localStorage.setItem(clave(), JSON.stringify(v)); }catch(e){} }
 function leerLocal(){ try{ return JSON.parse(localStorage.getItem(clave())); }catch(e){ return null; } }
@@ -204,6 +282,8 @@ async function elegir(i){
     $('feedback').textContent = r.acierto ? '✅ ¡Correcto! +' + r.puntos : (i === -1 ? '⏰ Se acabó el tiempo' : '❌ ¡Casi!');
     $('feedback').className = 'feedback ' + (r.acierto ? 'ok' : 'ko');
     $('marcador').textContent = r.total + ' pts';
+    if (r.acierto) efecto(true, '✓ ¡Correcto!', '+' + r.puntos + ' pts');
+    else efecto(false, i === -1 ? '⏰ ¡Tiempo!' : '✗ ¡Casi!', '0 pts');
     setTimeout(siguiente, 1600);
   } catch (err) {
     $('feedback').textContent = err.message;
