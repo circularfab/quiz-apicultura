@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Juego de preguntas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --miel:#f6b81a; --miel-osc:#c98a00; --cera:#fff8e6; --tinta:#2b2112;
@@ -103,6 +106,64 @@
     15%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
     25%{transform:translate(-50%,-50%) scale(1)}
     85%{opacity:1}100%{opacity:.9;transform:translate(-50%,-50%) scale(1)}}
+  /* ═════════ AJUSTE 3 · ABEJA ANIMADA (interruptor abejaAnimada) ═════════ */
+  .abeja-anim{display:none;height:110px;position:relative;margin-top:6px}
+  body.abeja-viva .abeja.emoji{display:none}
+  body.abeja-viva .abeja-anim{display:block}
+  .abeja-anim .vuelo{position:absolute;left:50%;top:8px;width:110px;margin-left:-55px}
+  .abeja-anim svg{width:110px;height:auto;display:block;overflow:visible}
+  .abeja-anim .alas{transform-box:view-box;transform-origin:58px 39px;animation:aleteo .1s ease-in-out infinite alternate}
+  .abeja-anim .sombra{position:absolute;left:50%;bottom:0;width:60px;height:10px;margin-left:-30px;
+    border-radius:50%;background:rgba(120,80,0,.15);animation:sombra 3.2s ease-in-out infinite}
+  @keyframes aleteo{from{transform:scaleY(1)}to{transform:scaleY(.45)}}
+  @media (prefers-reduced-motion: no-preference){
+    .abeja-anim .vuelo{animation:revoloteo 3.2s ease-in-out infinite}
+    @keyframes revoloteo{
+      0%  {transform:translate(-38px,6px) rotate(-6deg)}
+      25% {transform:translate(0,-10px) rotate(3deg)}
+      50% {transform:translate(38px,4px) rotate(7deg)}
+      75% {transform:translate(4px,12px) rotate(-2deg)}
+      100%{transform:translate(-38px,6px) rotate(-6deg)}}
+    @keyframes sombra{0%,100%{transform:translateX(-38px) scale(.9)}50%{transform:translateX(38px) scale(1.05)}}
+  }
+
+  /* ═════════ AJUSTE 4 · TÍTULO DE PANAL (interruptor tituloPanal) ═════════ */
+  body.panal #vInicio h1{
+    font-family:'Fredoka',system-ui,sans-serif;font-weight:700;font-size:clamp(2.1rem,9.5vw,2.9rem);
+    line-height:1.05;letter-spacing:.5px;margin:.15em 0 0;
+    color:#e9a400;
+    background:linear-gradient(180deg,#ffe27a 0%,#f6b81a 48%,#d98c00 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    /* contorno con sombras (no con text-stroke: en esta fuente marca líneas dentro de las letras) */
+    filter:drop-shadow(1.2px 0 0 #8a5200) drop-shadow(-1.2px 0 0 #8a5200)
+           drop-shadow(0 1.2px 0 #8a5200) drop-shadow(0 -1.2px 0 #8a5200)
+           drop-shadow(0 3px 0 #7a4800) drop-shadow(0 6px 8px rgba(120,70,0,.25))}
+  .goteo{display:none}
+  body.panal .goteo{display:block;width:min(260px,70%);height:22px;margin:-2px auto 6px}
+  body.panal #vInicio .sub{
+    font-family:'Fredoka',system-ui,sans-serif;font-weight:600;font-size:1.15rem;color:#5a3a00;
+    display:table;margin:4px auto 24px;padding:9px 30px;background:#ffd75e;
+    clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%);
+    box-shadow:inset 0 -3px 0 rgba(170,100,0,.25)}
+  body.panal .cabecera-inicio{position:relative;padding-top:4px}
+  .app{position:relative;z-index:0}
+
+  /* ═════════ AJUSTE 6 · PIE CON EL LOGO DEL CENTRO (interruptor pieCentro) ═════════ */
+  .pie-centro{display:none}
+  body.pie .pie-centro{display:block;margin-top:28px;background:#fff;border-radius:16px;
+    padding:16px 18px 14px;box-shadow:0 2px 10px rgba(0,0,0,.06);text-align:center}
+  .pie-centro .logo-centro{display:block;width:100%;max-width:230px;height:auto;margin:0 auto}
+  .pie-centro p{margin:10px 0 0;font-size:.98rem;color:var(--gris);line-height:1.4}
+  .pie-centro b{color:var(--tinta)}
+
+  /* ═════════ AJUSTE 5 · FONDO DE PANAL EN TODO EL JUEGO (interruptor fondoPanal) ═════════ */
+  body.fondo-panal{
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='83.16' viewBox='0 0 48 83.16'%3E%3Cpath d='M24 0l24 13.86v27.72L24 55.44 0 41.58V13.86zM24 55.44v27.72' fill='none' stroke='%23d99a00' stroke-opacity='.2' stroke-width='2'/%3E%3C/svg%3E"),
+      radial-gradient(circle at 10% 0%,#ffe9a8 0,transparent 45%),
+      radial-gradient(circle at 100% 100%,#ffe0a0 0,transparent 40%);
+    background-size:36px 62.37px,auto,auto}
+
   @media (prefers-reduced-motion: no-preference){
     body.enfasis .op.mal{animation:sacudir .45s}
     @keyframes sacudir{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}
@@ -115,9 +176,50 @@
 
   <!-- INICIO -->
   <section id="vInicio">
-    <div class="abeja">🐝</div>
-    <h1 id="titulo"></h1>
-    <p class="sub" id="subtitulo"></p>
+    <div class="cabecera-inicio">
+      <div class="abeja emoji">🐝</div>
+      <div class="abeja-anim" aria-hidden="true">
+        <div class="vuelo">
+          <svg viewBox="0 0 120 92" xmlns="http://www.w3.org/2000/svg">
+            <!-- alas -->
+            <!-- dos alas iguales que salen del mismo punto del lomo y aletean a la vez -->
+            <g class="alas" fill="#e4f5ff" fill-opacity=".9" stroke="#7fb3cc" stroke-width="2">
+              <ellipse cx="58" cy="20" rx="10.5" ry="19" transform="rotate(-28 58 39)"/>
+              <ellipse cx="58" cy="20" rx="10.5" ry="19" transform="rotate(28 58 39)"/>
+            </g>
+            <!-- aguijón -->
+            <path d="M24 56 L12 60 L24 64 Z" fill="#2b2112"/>
+            <!-- cuerpo con rayas -->
+            <defs><clipPath id="cuerpo"><ellipse cx="56" cy="58" rx="33" ry="24"/></clipPath></defs>
+            <ellipse cx="56" cy="58" rx="33" ry="24" fill="#f9c22e"/>
+            <g clip-path="url(#cuerpo)" fill="#2b2112">
+              <rect x="34" y="30" width="9" height="60" rx="3"/>
+              <rect x="51" y="30" width="9" height="60" rx="3"/>
+            </g>
+            <ellipse cx="56" cy="58" rx="33" ry="24" fill="none" stroke="#2b2112" stroke-width="3"/>
+            <!-- cabeza -->
+            <circle cx="90" cy="50" r="16" fill="#f9c22e" stroke="#2b2112" stroke-width="3"/>
+            <circle cx="84.5" cy="47" r="3.8" fill="#2b2112"/>
+            <circle cx="85.8" cy="45.7" r="1.3" fill="#fff"/>
+            <circle cx="96" cy="47" r="3.8" fill="#2b2112"/>
+            <circle cx="97.3" cy="45.7" r="1.3" fill="#fff"/>
+            <path d="M86 55 q4.3 4.5 8.6 0" fill="none" stroke="#2b2112" stroke-width="2.4" stroke-linecap="round"/>
+            <circle cx="80.5" cy="54" r="2.8" fill="#ff9f7a" fill-opacity=".7"/>
+            <circle cx="100" cy="54" r="2.8" fill="#ff9f7a" fill-opacity=".7"/>
+            <!-- antenas -->
+            <path d="M88 35 q-2 -12 -9 -16" fill="none" stroke="#2b2112" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M96 36 q4 -12 12 -14" fill="none" stroke="#2b2112" stroke-width="2.4" stroke-linecap="round"/>
+            <circle cx="79" cy="19" r="3.2" fill="#2b2112"/><circle cx="108" cy="22" r="3.2" fill="#2b2112"/>
+          </svg>
+        </div>
+        <div class="sombra"></div>
+      </div>
+      <h1 id="titulo"></h1>
+      <svg class="goteo" viewBox="0 0 260 22" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 0 H260 V4 Q252 4 250 10 Q248 18 244 18 Q240 18 239 10 Q237 4 220 4 Q206 4 204 13 Q202 22 197 22 Q192 22 191 13 Q189 4 160 4 Q148 4 147 9 Q146 14 142 14 Q138 14 137 9 Q136 4 96 4 Q84 4 83 12 Q82 19 77 19 Q72 19 71 12 Q70 4 40 4 Q30 4 29 8 Q28 12 25 12 Q22 12 21 8 Q20 4 0 4 Z" fill="#e9a400"/>
+      </svg>
+      <p class="sub" id="subtitulo"></p>
+    </div>
     <label for="nombre">Tu nombre</label>
     <input id="nombre" maxlength="20" autocomplete="off" placeholder="Ej.: Lucía G.">
     <div id="cajaCodigo" class="oculto" style="margin-top:14px">
@@ -149,6 +251,10 @@
       <div class="puesto" id="fPuesto"></div>
     </div>
     <p class="reglas">Busca tu nombre en la pantalla del stand 📺</p>
+    <div class="pie-centro">
+      <svg class="logo-centro" role="img" aria-label="Circular FAB" version="1.1" viewBox="0 0 462.7091 133.62079" xmlns="http://www.w3.org/2000/svg" ><g transform="translate(-208.61896,29.877926)"><g transform="translate(208.61887,-31.872327)"><path d="M 45.971,53.898 H 65.587 V 73.882 H 45.971 Z" style="fill:#46c6b7;" transform="matrix(1.3333333,0,0,-1.3333333,0,137.60933)" /><path d="M 45.97,31.702 H 65.586 V 53.898 H 45.97 Z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,0,137.60933)" /><path d="M 233.182,74.249 H 216.985 V 44.823 h 16.197 z" style="fill:#fe3024;" transform="matrix(1.3333333,0,0,-1.3333333,0,137.60933)" /><path d="m 233.182,32.07 h 11.007 v 12.753 h -11.007 z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,0,137.60933)" /><path d="m 216.985,32.07 h 16.197 v 12.753 h -16.197 z" style="fill:#008253;" transform="matrix(1.3333333,0,0,-1.3333333,0,137.60933)" /><path d="M 205.755,52.8 H 166.82 v 20.685 h 38.935 z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,0,137.60933)" /><path d="M 0,0 -10.543,18.005 H -38.126 L -48.669,0 Z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,401.11787,94.542267)" /><path d="M 0,0 -13.792,-23.551 H 13.792 Z" style="fill:#ffb0a9;" transform="matrix(1.3333333,0,0,-1.3333333,368.67173,39.134267)" /><path d="M 0,0 C 8.566,-8.43 22.411,-8.467 31.026,-0.114 L 15.455,15.238 Z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,8.624,88.722267)" /><path d="m 0,0 15.703,15.482 c -0.044,0.044 -0.085,0.09 -0.129,0.134 C 6.966,24.103 -6.965,23.889 -15.574,15.401 -15.596,15.378 0,0 0,0" style="fill:#00a86b;" transform="matrix(1.3333333,0,0,-1.3333333,29.176267,68.405067)" /><path d="m 0,0 c -8.477,-8.498 -8.435,-22.16 0.129,-30.604 0.004,-0.004 0.009,-0.008 0.014,-0.012 l 15.455,15.238 z" style="fill:#008253;" transform="matrix(1.3333333,0,0,-1.3333333,8.4348,47.900267)" /><path d="m 0,0 c -1.794,-0.724 -3.751,-1.133 -5.805,-1.15 v 0.019 H -26.93 l -0.046,-9.894 H 9.958 Z" style="fill:#fe3024;" transform="matrix(1.3333333,0,0,-1.3333333,139.3352,79.924933)" /><path d="m 0,0 c 0,8.414 -6.797,15.256 -15.272,15.497 v 10e-4 h -0.025 c -0.101,0.002 -0.201,0.009 -0.302,0.01 v -0.01 h -21.157 v -0.042 l 26.97,-29.813 C -4.046,-12.045 0,-6.491 0,0" style="fill:#008253;" transform="matrix(1.3333333,0,0,-1.3333333,152.37867,60.781333)" /><path d="m 0,0 v -0.019 c 2.056,0.017 4.017,0.426 5.813,1.15 l -26.97,29.814 V 0 Z" style="fill:#00a86b;" transform="matrix(1.3333333,0,0,-1.3333333,131.57947,81.4336)" /><path d="M 0,0 C 8.566,-8.43 22.411,-8.467 31.026,-0.114 L 15.455,15.238 Z" style="fill:#ffb0a9;" transform="matrix(1.3333333,0,0,-1.3333333,170.54333,88.722267)" /><path d="m 0,0 15.703,15.482 c -0.044,0.044 -0.085,0.09 -0.129,0.134 C 6.966,24.103 -6.965,23.889 -15.574,15.401 -15.596,15.378 0,0 0,0" style="fill:#feb701;" transform="matrix(1.3333333,0,0,-1.3333333,191.0944,68.405067)" /><path d="m 0,0 c -8.477,-8.498 -8.435,-22.16 0.129,-30.604 0.004,-0.004 0.009,-0.008 0.014,-0.012 l 15.455,15.238 z" style="fill:#fe3024;" transform="matrix(1.3333333,0,0,-1.3333333,170.35307,47.900267)" /><path d="m 0,0 c 0.089,-11.919 8.769,-21.55 19.468,-21.55 10.699,0 19.379,9.631 19.468,21.55 z" style="fill:#00a86b;" transform="matrix(1.3333333,0,0,-1.3333333,222.4336,67.0256)" /><path d="m 0,0 c -1.796,-0.724 -3.757,-1.133 -5.813,-1.15 v 0.019 h -21.158 l -0.046,-9.894 h 36.99 z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,449.41187,79.924933)" /><path d="m 0,0 c 0,8.414 -6.797,15.256 -15.272,15.497 v 10e-4 h -0.025 c -0.101,0.002 -0.201,0.009 -0.302,0.01 v -0.01 h -21.157 v -0.042 l 26.97,-29.813 C -4.046,-12.045 0,-6.491 0,0" style="fill:#00a86b;" transform="matrix(1.3333333,0,0,-1.3333333,462.47493,60.781333)" /><path d="m 0,0 v -0.019 c 2.056,0.017 4.017,0.426 5.813,1.15 l -26.97,29.814 V 0 Z" style="fill:#008253;" transform="matrix(1.3333333,0,0,-1.3333333,441.67613,81.4336)" /><path d="m 0,0 v -21.307 h 5.989 v 7.61 h 10.22 v 4.931 H 5.989 v 3.592 H 17.29 V 0 Z" style="fill:#feb701;" transform="matrix(1.3333333,0,0,-1.3333333,189.48867,107.20493)" /><path d="m 0,0 -9.201,-21.459 h 6.299 l 1.543,3.804 h 8.336 l 1.575,-3.804 h 6.422 L 5.773,0 Z m 2.84,-7.031 2.408,-6.058 H 0.402 Z" style="fill:#feb701;" transform="matrix(1.3333333,0,0,-1.3333333,226.12627,107.00187)" /><path d="m 0,0 h 11.065 c 1.355,0 2.517,-0.162 3.483,-0.487 0.966,-0.324 1.767,-0.802 2.405,-1.431 0.431,-0.426 0.77,-0.923 1.016,-1.491 0.246,-0.568 0.37,-1.218 0.37,-1.948 v -0.062 c 0,-1.237 -0.312,-2.237 -0.937,-2.998 -0.625,-0.761 -1.418,-1.344 -2.38,-1.75 1.321,-0.426 2.369,-1.04 3.144,-1.842 0.774,-0.801 1.161,-1.922 1.161,-3.363 v -0.061 c 0,-1.847 -0.715,-3.287 -2.145,-4.323 -1.432,-1.034 -3.443,-1.552 -6.037,-1.552 H 0 Z m 9.601,-8.493 c 0.927,0 1.632,0.153 2.116,0.457 0.483,0.304 0.725,0.771 0.725,1.4 v 0.061 c 0,0.588 -0.226,1.039 -0.679,1.354 -0.453,0.315 -1.132,0.473 -2.038,0.473 h -3.89 v -3.745 z m 0.865,-8.066 c 0.927,0 1.636,0.167 2.13,0.502 0.494,0.335 0.741,0.817 0.741,1.446 v 0.061 c 0,0.588 -0.236,1.055 -0.71,1.4 -0.473,0.345 -1.214,0.517 -2.223,0.517 H 5.835 v -3.926 z" style="fill:#feb701;" transform="matrix(1.3333333,0,0,-1.3333333,248.89053,107.20453)" /><path d="m 0,0 v -6.152 h 1.231 c 1.173,0 1.888,0.514 1.888,2.117 V -2.06 C 3.119,-0.629 2.633,0 1.517,0 Z m 3.434,-17.17 c -0.171,0.515 -0.286,0.83 -0.286,2.461 v 3.148 c 0,1.86 -0.63,2.547 -2.06,2.547 H 0 V -17.17 H -3.148 V 2.862 h 4.75 c 3.263,0 4.665,-1.516 4.665,-4.607 v -1.574 c 0,-2.06 -0.658,-3.377 -2.061,-4.035 v -0.058 c 1.575,-0.658 2.09,-2.146 2.09,-4.235 v -3.091 c 0,-0.973 0.028,-1.688 0.343,-2.432 z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,9.3506667,6.1157333)" /><path d="M 0,0 H 4.322 V -2.862 H 0 V -8.729 H 5.437 V -11.59 H -3.148 V 8.442 H 5.437 V 5.58 H 0 Z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,24.6912,13.555867)" /><path d="m 0,0 v -14.309 h 1.774 c 1.002,0 1.603,0.516 1.603,1.947 V -1.946 C 3.377,-0.515 2.776,0 1.774,0 Z m -3.148,2.862 h 4.98 c 3.147,0 4.693,-1.746 4.693,-4.951 v -10.13 c 0,-3.205 -1.546,-4.951 -4.693,-4.951 h -4.98 z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,38.734,6.1157333)" /><path d="m 0,0 v -2.661 c 0,-3.206 -1.603,-5.037 -4.694,-5.037 -3.09,0 -4.693,1.831 -4.693,5.037 V 7.755 c 0,3.205 1.603,5.037 4.693,5.037 C -1.603,12.792 0,10.96 0,7.755 V 5.809 h -2.977 v 2.147 c 0,1.431 -0.629,1.974 -1.631,1.974 -1.002,0 -1.631,-0.543 -1.631,-1.974 V -2.862 c 0,-1.431 0.629,-1.945 1.631,-1.945 1.002,0 1.631,0.514 1.631,1.945 V 0 Z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,68.192933,19.0504)" /><path d="M 53.062,101.483 H 56.21 V 81.451 h -3.148 z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,0,137.60933)" /><path d="M 0,0 H 9.73 V -2.862 H 6.438 V -20.033 H 3.291 V -2.862 H 0 Z" style="fill:#00a7a1;" transform="matrix(1.3333333,0,0,-1.3333333,76.779467,2.2993333)" /></g></g></svg>
+      <p>Juego realizado en el <b>Circular FAB</b> de Caminomorisco</p>
+    </div>
   </section>
 
   <div id="vCargando" class="cargando oculto">Cargando…</div>
@@ -160,11 +266,15 @@
 <script>
 // ════════════════════════════════════════════════════════════
 //  APARIENCIA · true = activado · false = como estaba antes
-//  (para probar sin subir nada: añade &letra=0 o &enfasis=0 a la URL)
+//  (para probar sin subir nada: añade &letra=0, &enfasis=0, &abeja=0, &panal=0, &fondo=0 o &pie=0 a la URL)
 // ════════════════════════════════════════════════════════════
 const APARIENCIA = {
   letraGrande: true,         // Ajuste 1: letra más grande en preguntas y respuestas
   enfasisRespuestas: true,   // Ajuste 2: destello, sello, ✓/✗, sacudida y vibración
+  abejaAnimada: true,        // Ajuste 3: abeja revoloteando en la pantalla del nombre
+  tituloPanal: true,         // Ajuste 4: título y subtítulo con estilo de panal y miel
+  fondoPanal: true,          // Ajuste 5: celdas de panal de fondo en todas las pantallas
+  pieCentro: true,           // Ajuste 6: logo y mensaje del Circular FAB en la pantalla final
 };
 
 let CFG = null;
@@ -178,6 +288,10 @@ const $ = id => document.getElementById(id);
   const val = (param, def) => q.has(param) ? q.get(param) !== '0' : def;
   document.body.classList.toggle('letra-grande', val('letra', APARIENCIA.letraGrande));
   document.body.classList.toggle('enfasis', val('enfasis', APARIENCIA.enfasisRespuestas));
+  document.body.classList.toggle('abeja-viva', val('abeja', APARIENCIA.abejaAnimada !== false));
+  document.body.classList.toggle('panal', val('panal', APARIENCIA.tituloPanal !== false));
+  document.body.classList.toggle('fondo-panal', val('fondo', APARIENCIA.fondoPanal !== false));
+  document.body.classList.toggle('pie', val('pie', APARIENCIA.pieCentro !== false));
 })();
 
 // Efecto de acierto/fallo (solo con el ajuste 2 activo)
