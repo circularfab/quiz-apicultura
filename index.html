@@ -72,6 +72,8 @@
   .puesto{font-size:1.5rem;font-weight:800;margin:10px 0}
   .tarjeta{background:var(--sup);border-radius:16px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-top:12px}
   .cargando{text-align:center;color:var(--gris);margin-top:40px}
+  .reintentar{display:block;margin:14px auto 0;border:0;border-radius:12px;padding:12px 22px;
+    font-size:1.05rem;font-weight:800;background:var(--miel);color:#2b2112;cursor:pointer;box-shadow:0 3px 0 var(--miel-osc)}
 
   /* ═════════ AJUSTE 1 · LETRA GRANDE (interruptor letraGrande) ═════════ */
   body.letra-grande .cabecera{font-size:1.2rem}
@@ -350,8 +352,18 @@ function leerLocal(){ try{ return JSON.parse(localStorage.getItem(clave())); }ca
 $('nombre').addEventListener('keydown', e => { if (e.key === 'Enter') empezar(); });
 $('bJugar').addEventListener('click', empezar);
 
+// Botón "Reintentar" bajo un mensaje (en lugar de seguir y perder la partida)
+function botonReintentar(dentroDe, accion){
+  const b = document.createElement('button');
+  b.className = 'reintentar'; b.textContent = '🔄 Reintentar';
+  b.onclick = () => { b.remove(); accion(); };
+  dentroDe.appendChild(b);
+}
+
 // Arranque: pedir configuración al servidor
 ver('vCargando');
+function arrancar(){
+$('vCargando').textContent = 'Cargando…';
 apiGet('config').then(c => {
   CFG = c;
   document.title = CFG.titulo;
@@ -362,8 +374,11 @@ apiGet('config').then(c => {
   if (CFG.unIntento && previo && previo.resultado) mostrarFinal(previo.nombre, previo.resultado);
   else ver('vInicio');
 }).catch(err => {
-  $('vCargando').textContent = 'No se pudo conectar con el juego: ' + err.message + '. Recarga la página.';
+  $('vCargando').textContent = 'No se pudo conectar con el juego (' + err.message + ').';
+  botonReintentar($('vCargando'), arrancar);
 });
+}
+arrancar();
 
 async function empezar(){
   const nombre = $('nombre').value.trim();
@@ -379,7 +394,7 @@ async function empezar(){
     mostrarPregunta();
   } catch (err) {
     ver('vInicio'); $('bJugar').disabled = false;
-    $('errInicio').textContent = err.message;
+    $('errInicio').textContent = err.deRed ? 'Sin conexión. Comprueba la cobertura y pulsa ¡Jugar! otra vez.' : err.message;
   }
 }
 
@@ -417,6 +432,11 @@ async function elegir(i){
   const botones = [...$('opciones').children];
   botones.forEach((b, k) => { b.disabled = true; if (k !== i) b.classList.add('atenuada'); });
   $('feedback').textContent = i === -1 ? '⏰ ¡Tiempo!' : 'Comprobando…';
+  enviarRespuesta(i, ms, botones);
+}
+
+async function enviarRespuesta(i, ms, botones){
+  $('feedback').className = 'feedback';
   try {
     const r = await apiPost({ accion: 'responder', id: partida.id, indice: actual, eleccion: i, ms: ms });
     if (r.correcta !== null && botones[r.correcta]) botones[r.correcta].classList.add('correcta');
@@ -430,8 +450,13 @@ async function elegir(i){
     setTimeout(siguiente, 1600);
   } catch (err) {
     $('feedback').textContent = err.message;
-    $('feedback').className = 'feedback ko';
-    setTimeout(siguiente, 2000);
+    $('feedback').className = 'feedback';   // visible aunque esté el ajuste de énfasis
+    if (err.deRed) {
+      // No pasamos de pregunta: si no, la partida no se podría guardar
+      botonReintentar($('feedback'), () => { $('feedback').textContent = 'Comprobando…'; enviarRespuesta(i, ms, botones); });
+    } else {
+      setTimeout(siguiente, 2000);
+    }
   }
 }
 
@@ -439,13 +464,19 @@ async function siguiente(){
   actual++;
   if (actual < total) { mostrarPregunta(); return; }
   ver('vCargando');
+  guardarPartida();
+}
+
+async function guardarPartida(){
   $('vCargando').textContent = 'Guardando tu puntuación…';
   try {
     const r = await apiPost({ accion: 'terminar', id: partida.id });
     guardarLocal({ nombre: partida.nombre, resultado: r });
     mostrarFinal(partida.nombre, r);
   } catch (err) {
-    $('vCargando').textContent = 'No se pudo guardar: ' + err.message + '. Avisa en el stand.';
+    $('vCargando').textContent = 'No se pudo guardar tu puntuación (' + err.message + ').';
+    if (err.deRed) botonReintentar($('vCargando'), guardarPartida);
+    else $('vCargando').textContent += ' Avisa en el stand.';
   }
 }
 
